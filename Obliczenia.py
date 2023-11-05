@@ -1,3 +1,4 @@
+#Do użycia na później
 # Wyświetl przypisane wartości
 print(f'Białko surowe: {bialko_surowe} %')
 print(f'Tłuszcz surowy: {tluszcz_surowy} %')

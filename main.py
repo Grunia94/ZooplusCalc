@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
-import requests 
-import xlsxwriter
+import requests
 import re
 import math
 import json
@@ -10,7 +9,7 @@ values=list()
 ingredient_dict = {}
 _id={}
 _name={}
-waga=float(input("Podaj wagę: "))
+## waga=float(input("Podaj wagę: "))
 
 
 response = requests.get("https://www.zooplus.pl/shop/koty/karma_dla_kota_mokra/granatapet/karma_mokra/533954")
@@ -56,7 +55,7 @@ for i in articles:
             Calcium FLOAT,
             Phosphorus FLOAT,
             Humidity FLOAT,
-            Potasium FLOAT,
+            Potassium FLOAT,
             Sodium FLOAT,
             Omega3 FLOAT,
             Omega6 FLOAT
