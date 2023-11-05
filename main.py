@@ -56,7 +56,7 @@ for i in articles:
             Calcium FLOAT,
             Phosphorus FLOAT,
             Humidity FLOAT,
-            Potasium FLOAT,
+            Potassium FLOAT,
             Sodium FLOAT,
             Omega3 FLOAT,
             Omega6 FLOAT
