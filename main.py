@@ -3,114 +3,67 @@ import requests
 import xlsxwriter
 import re
 import math
+import json
+import sqlite3
 
-headers=list()
 values=list()
-
+ingredient_dict = {}
+_id={}
+_name={}
 waga=float(input("Podaj wagę: "))
 
 
-response = requests.get("https://www.zooplus.pl/shop/koty/karma_dla_kota_mokra/granatapet/1889536")
+response = requests.get("https://www.zooplus.pl/shop/koty/karma_dla_kota_mokra/granatapet/karma_mokra/533954")
 soup = BeautifulSoup(response.text,features="html.parser")
 
+script = soup.find_all('script')[34].text.strip()
+json_obj = json.loads(script)
+articles = json_obj['props']['pageProps']['pageLevelProps']['pdpContext']['product']['articleVariants']
 
-table = soup.find('table', {"data-zta": "constituentsTable"})
-for i, row in enumerate(table.find_all('tr')):
-        values.append([el.text.strip() for el in row.find_all('td')])
-# Inicjalizacja pustego słownika
-variable_dict = {}
+attributes = ['Id','Marka','Nazwa','Białko surowe', 'Tłuszcz surowy', 'Włókno surowe', 'Popiół surowy', 'Wapń', 'Fosfor', 'Wilgotność','Potas','Sód','Kwasy tłuszczowe Omega 3','Kwasy tłuszczowe Omega 6']
+articles_name= json_obj['props']['pageProps']['pageLevelProps']['pdpContext']['product']['brand']
+print(articles_name)
 
-# Przetwarzanie listy i przypisywanie zmiennych i wartości jako liczby zmiennoprzecinkowe (float)
-for item in values:
-    variable_name, value_str = item
-    # Użyj wyrażenia regularnego do wyłuskania cyfr i kropki dziesiętnej
-    matches = re.findall(r'[0-9.]+', value_str)
-    if matches:
-        value_float = round(float(matches[0]), 4)
-        variable_dict[variable_name] = value_float
-
-# Wydrukowanie utworzonego słownika
-for key, value in variable_dict.items():
-    print(f'{key}: {value}')
-bialko_surowe = variable_dict.get('Białko surowe', None)
-tluszcz_surowy = variable_dict.get('Tłuszcz surowy', None)
-wlokno_surowe = variable_dict.get('Włókno surowe', None)
-popiol_surowy = variable_dict.get('Popiół surowy', None)
-wapn = variable_dict.get('Wapń', None)
-fosfor = variable_dict.get('Fosfor', None)
-wilgotnosc = variable_dict.get('Wilgotność', None)
-potas = variable_dict.get('Potas', None)
-sod = variable_dict.get('Sód', None)
-omega_3 = variable_dict.get('Kwasy tłuszczowe Omega 3', None)
-omega_6 = variable_dict.get('Kwasy tłuszczowe Omega 6', None)
-
-# Przypisz wartości do pojedynczych zmiennych
-if bialko_surowe is not None:
-    print(f'Białko surowe: {bialko_surowe} %')
-if tluszcz_surowy is not None:
-    print(f'Tłuszcz surowy: {tluszcz_surowy} %')
-if wlokno_surowe is not None:
-    print(f'Włókno surowe: {wlokno_surowe} %')
-if popiol_surowy is not None:
-    print(f'Popiół surowy: {popiol_surowy} %')
-if wapn is not None:
-    print(f'Wapń: {wapn} %')
-if fosfor is not None:
-    print(f'Fosfor: {fosfor} %')
-if wilgotnosc is not None:
-    print(f'Wilgotność: {wilgotnosc} %')
-if potas is not None:
-    print(f'Potas: {potas} %')
-if sod is not None:
-    print(f'Sód: {sod} %')
-if omega_3 is not None:
-    print(f'Kwasy tłuszczowe Omega 3: {omega_3} %')
-if omega_6 is not None:
-    print(f'Kwasy tłuszczowe Omega 6: {omega_6} %')
-
-# Wyświetl przypisane wartości
-print(f'Białko surowe: {bialko_surowe} %')
-print(f'Tłuszcz surowy: {tluszcz_surowy} %')
-print(f'Włókno surowe: {wlokno_surowe} %')
-print(f'Popiół surowy: {popiol_surowy} %')
-print(f'Wapń: {wapn} %')
-print(f'Fosfor: {fosfor} %')
-print(f'Wilgotność: {wilgotnosc} %')
-print(f'Potas: {potas} %')
-print(f'Sód: {sod} %')
-print(f'Kwasy tłuszczowe Omega 3: {omega_3} ')
-print(f'Kwasy tłuszczowe Omega 6: {omega_6} ')
-
-# Procentowa wartosc weglowodanow w mokrej masie
-pww = round((100 - bialko_surowe - tluszcz_surowy - popiol_surowy - wlokno_surowe - wilgotnosc), 2)
-print('Procentowa wartosc weglowodanow w mokrej masie: ',pww)
-# Gęstość energetyczna karmy
-gek = round((bialko_surowe*3.5)+(tluszcz_surowy*8.5)+(pww*3.5),2)
-print('Gęstość energetyczna karmy: ', gek)
-# Rozmieszczenie energii w karmie
-rek = round((((bialko_surowe * 3.5) / ((bialko_surowe*3.5)+(tluszcz_surowy*8.5)+(pww*3.5))) * 100),2)
-print('Rozmieszczenie energii w karmie: ', rek)
-# Dzienne zapotrzebowanie (MER)
-mer= round((60 * (math.pow(waga, 0.67))),2)
-print('Dzienne zapotrzebowanie [kcal/dzien]: ',mer)
-# Dzienna dawka pokarmowa [g/dzien]
-ddp= round((((60 * (math.pow(waga, 0.67)))/((bialko_surowe*3.5)+(tluszcz_surowy*8.5)+(pww*3.5))) * 100),2)
-print('Dzienna dawka pokarmowa [g/dzien]: ',ddp)
-# Procent bialka w suchej masie
-pbs = round(((bialko_surowe / (100 - wilgotnosc)) * 100),2)
-print('Procent bialka w suchej masie: ',pbs)
-# Procent tłuszczu w suchej masie
-pts= round((tluszcz_surowy / (100 - wilgotnosc) * 100),2)
-print('Procent tłuszczu w suchej masie: ', pts)
-# Procent weglowodanów w suchej masie
-pws= round((pww/(100-wilgotnosc)*100),2)
-print('Procent weglowodanów w suchej masie: ',pws)
-# Procent wapnia w suchej masie
-pwas = round(100 * ( wapn / (100 - wilgotnosc )),2)
-print('Procent wapnia w suchej masie: ',pwas)
-# Procent fosforu w suchej masie
-pfs = round(100 * ( fosfor / (100 - wilgotnosc )),2)
-print('Procent fosforu w suchej masie: ',pfs)
-# Zapotrzebowanie na wodę [ml]
-znw= round((50*waga),2)
-print('Zapotrzebowanie na wodę [ml]: ',znw)
+for i in articles:
+    _id_num = i.get('id')
+    _name = i.get('description')
+    _artname=str(articles_name)
+    foods= i.get('articleConstituents')
+    for item in foods:
+        ingredient_dict['Id']=[_id_num]
+        ingredient_dict['Marka']=[_artname]
+        ingredient_dict['Nazwa']=[_name]
+        ingredient_name = item['ingredientName']
+        amount = item['amount']
+        if ingredient_name in ingredient_dict:
+            ingredient_dict[ingredient_name].append(amount)
+        else:
+            ingredient_dict[ingredient_name] = [amount]
+        values = [ingredient_dict.get(atribute, [0])[0] for atribute in attributes]
+    print(values)
+    #na tym poziomie zrobić obsługę bazy
+    conn = sqlite3.connect(r'D:\Baza\citcalc.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ZooplusNutritions (
+            Id INT PRIMARY KEY,
+            Brand TEXT,
+            Name TEXT,
+            Protein FLOAT,
+            Fat FLOAT,
+            Fiber FLOAT,
+            Calx FLOAT,
+            Calcium FLOAT,
+            Phosphorus FLOAT,
+            Humidity FLOAT,
+            Potasium FLOAT,
+            Sodium FLOAT,
+            Omega3 FLOAT,
+            Omega6 FLOAT
+        )               
+    ''')
+    if ingredient_dict:
+        cursor.execute('INSERT INTO ZooplusNutritions (Id, Brand, Name, Protein, Fat, Fiber, Calx, Calcium, Phosphorus, Humidity, Potasium, Sodium, Omega3, Omega6) VALUES (?, ?, ?, ?, ? , ?, ?, ?, ? , ?, ?, ?, ?, ?)', (values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9], values[10], values[11], values[12], values[13]))
+        conn.commit()
+        cursor.close()
+    ingredient_dict={}
